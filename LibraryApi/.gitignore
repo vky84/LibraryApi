@@ -465,3 +465,9 @@ public
 # Temporary folders
 tmp/
 temp/
+
+# Entity Framework Migrations (keep migrations folder but ignore certain files)
+# Uncomment the following lines if you want to ignore specific migration files
+# Migrations/*
+# !Migrations/
+# !Migrations/*.cs

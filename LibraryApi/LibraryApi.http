@@ -1,6 +1,62 @@
 @LibraryApi_HostAddress = http://localhost:5262
 
-GET {{LibraryApi_HostAddress}}/weatherforecast/
+### Get all books
+GET {{LibraryApi_HostAddress}}/api/books
 Accept: application/json
 
 ###
+
+### Get available books
+GET {{LibraryApi_HostAddress}}/api/books/available
+Accept: application/json
+
+###
+
+### Get book by ID
+GET {{LibraryApi_HostAddress}}/api/books/1
+Accept: application/json
+
+###
+
+### Add a new book
+POST {{LibraryApi_HostAddress}}/api/books
+Content-Type: application/json
+
+{
+  "title": "New Book Title",
+  "author": "Author Name",
+  "isbn": "978-1234567890",
+  "publishedDate": "2024-01-01T00:00:00",
+  "genre": "Fiction",
+  "description": "A new book description"
+}
+
+###
+
+### Borrow a book
+POST {{LibraryApi_HostAddress}}/api/borrowing/borrow
+Content-Type: application/json
+
+{
+  "bookId": 1,
+  "userId": "user123",
+  "userName": "Test User"
+}
+
+###
+
+### Get user borrowings
+GET {{LibraryApi_HostAddress}}/api/borrowing/user/user123
+Accept: application/json
+
+###
+
+### Get overdue books
+GET {{LibraryApi_HostAddress}}/api/borrowing/overdue
+Accept: application/json
+
+###
+````````
+
+
+# Response

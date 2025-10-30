@@ -1,4 +1,6 @@
 using LibraryApi.Models;
+using LibraryApi.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryApi.Services
 {
@@ -12,40 +14,17 @@ namespace LibraryApi.Services
 
     public class BorrowingService : IBorrowingService
     {
+        private readonly LibraryDbContext _context;
         private readonly IBooksService _booksService;
-        private static List<BorrowingRecord> _borrowingRecords = new List<BorrowingRecord>
-        {
-            new BorrowingRecord 
-            { 
-                Id = 1, 
-                BookId = 3, 
-                UserId = "user1", 
-                UserName = "John Doe", 
-                BorrowedDate = DateTime.Now.AddDays(-10), 
-                DueDate = DateTime.Now.AddDays(-3),
-                ReturnedDate = null
-            },
-            new BorrowingRecord 
-            { 
-                Id = 2, 
-                BookId = 1, 
-                UserId = "user2", 
-                UserName = "Jane Smith", 
-                BorrowedDate = DateTime.Now.AddDays(-5), 
-                DueDate = DateTime.Now.AddDays(9),
-                ReturnedDate = DateTime.Now.AddDays(-1)
-            }
-        };
 
-        public BorrowingService(IBooksService booksService)
+        public BorrowingService(LibraryDbContext context, IBooksService booksService)
         {
+            _context = context;
             _booksService = booksService;
         }
 
         public async Task<BorrowingRecord?> BorrowBookAsync(BorrowBookRequest request)
         {
-            await Task.Delay(10); // Simulate async operation
-            
             var book = await _booksService.GetBookByIdAsync(request.BookId);
             if (book == null || !book.IsAvailable)
             {
@@ -54,7 +33,6 @@ namespace LibraryApi.Services
 
             var borrowingRecord = new BorrowingRecord
             {
-                Id = _borrowingRecords.Count > 0 ? _borrowingRecords.Max(br => br.Id) + 1 : 1,
                 BookId = request.BookId,
                 UserId = request.UserId,
                 UserName = request.UserName,
@@ -63,20 +41,18 @@ namespace LibraryApi.Services
                 ReturnedDate = null
             };
 
-            _borrowingRecords.Add(borrowingRecord);
+            _context.BorrowingRecords.Add(borrowingRecord);
             
             // Mark book as unavailable
             book.IsAvailable = false;
-            await _booksService.UpdateBookAsync(book.Id, book);
+            await _context.SaveChangesAsync();
 
             return borrowingRecord;
         }
 
         public async Task<bool> ReturnBookAsync(int borrowingId)
         {
-            await Task.Delay(10); // Simulate async operation
-            
-            var borrowingRecord = _borrowingRecords.FirstOrDefault(br => br.Id == borrowingId);
+            var borrowingRecord = await _context.BorrowingRecords.FindAsync(borrowingId);
             if (borrowingRecord == null || borrowingRecord.IsReturned)
             {
                 return false;
@@ -89,22 +65,24 @@ namespace LibraryApi.Services
             if (book != null)
             {
                 book.IsAvailable = true;
-                await _booksService.UpdateBookAsync(book.Id, book);
             }
 
+            await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<IEnumerable<BorrowingRecord>> GetUserBorrowingsAsync(string userId)
         {
-            await Task.Delay(10); // Simulate async operation
-            return _borrowingRecords.Where(br => br.UserId == userId);
+            return await _context.BorrowingRecords
+                .Where(br => br.UserId == userId)
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<BorrowingRecord>> GetOverdueBooksAsync()
         {
-            await Task.Delay(10); // Simulate async operation
-            return _borrowingRecords.Where(br => br.IsOverdue);
+            return await _context.BorrowingRecords
+                .Where(br => !br.IsReturned && DateTime.Now > br.DueDate)
+                .ToListAsync();
         }
     }
 }
