@@ -38,6 +38,7 @@ spec:
       containers:
       - name: postgres
         image: postgres:15
+        imagePullPolicy: Always
         ports:
         - containerPort: 5432
         env:
@@ -47,9 +48,16 @@ spec:
           value: "postgres"
         - name: POSTGRES_PASSWORD
           value: "postgres"
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "postgres"]
+          initialDelaySeconds: 5
+          periodSeconds: 10
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
+        # Initialization script to force create user/db if volume already has old data
+        command: [ "sh", "-c", "rm -rf /var/lib/postgresql/data/* && docker-entrypoint.sh postgres" ]
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
@@ -58,7 +66,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: postgres-service
+  name: postgres
 spec:
   selector:
     app: postgres

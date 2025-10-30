@@ -12,6 +12,17 @@ spec:
       labels:
         app: libraryapi
     spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            until nc -z postgres 5432; do
+              echo "Waiting for Postgres..."
+              sleep 2
+            done
       containers:
       - name: libraryapi
         image: vky84/libraryapi:1.0
@@ -21,4 +32,4 @@ spec:
         - name: ASPNETCORE_ENVIRONMENT
           value: "Development"
         - name: ConnectionStrings__Default
-          value: 'Host=postgres-service;Port=5432;Database=LibraryDb;Username=postgres;Password=postgres'
+          value: 'Host=postgres;Port=5432;Database=LibraryDb;Username=postgres;Password=postgres'

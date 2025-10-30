@@ -18,9 +18,11 @@ cd /vagrant/LibraryApi/k8s
 kubectl apply -f libraryapi-deployment.yaml
 kubectl apply -f libraryapi-service.yaml
 
-kubectl port-forward --address 0.0.0.0 service/libraryapi-service 5081:8080
+kubectl port-forward --address 0.0.0.0 service/library  api-service 5081:8080
 
 kubectl get pods
 kubectl get services
 
 http://192.168.56.10:30080/swagger/index.htm
+
+kubectl rollout restart deployment libraryapi
