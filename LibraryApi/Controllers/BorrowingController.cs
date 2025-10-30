@@ -60,14 +60,14 @@ namespace LibraryApi.Controllers
             return Ok(borrowings);
         }
 
-        /// <summary>
-        /// Get all overdue books
-        /// </summary>
-        [HttpGet("overdue")]
-        public async Task<ActionResult<IEnumerable<BorrowingRecord>>> GetOverdueBooks()
-        {
-            var overdueBooks = await _borrowingService.GetOverdueBooksAsync();
-            return Ok(overdueBooks);
-        }
+        // /// <summary>
+        // /// Get all overdue books
+        // /// </summary>
+        // [HttpGet("overdue")]
+        // public async Task<ActionResult<IEnumerable<BorrowingRecord>>> GetOverdueBooks()
+        // {
+        //     var overdueBooks = await _borrowingService.GetOverdueBooksAsync();
+        //     return Ok(overdueBooks);
+        // }
     }
 }

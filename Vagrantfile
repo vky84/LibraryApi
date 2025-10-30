@@ -1,7 +1,7 @@
 Vagrant.configure("2") do |config|
   # Base Ubuntu 22.04
   config.vm.box = "ubuntu/jammy64"
-  config.vm.hostname = "bigdata-lab"
+  config.vm.hostname = "bigdata-assignment"
 
   # Network setup
   config.vm.network "private_network", ip: "192.168.56.10"
@@ -55,7 +55,7 @@ Vagrant.configure("2") do |config|
 
     echo "Installation and Minikube start completed!"
 
-    echo "Starting Minikube on boot..."
-    sudo bash -c 'echo "@reboot root minikube start --driver=docker" >> /etc/crontab'
+    # echo "Starting Minikube on boot..."
+    # sudo bash -c 'echo "@reboot root minikube start --driver=docker" >> /etc/crontab'
   SHELL
 end

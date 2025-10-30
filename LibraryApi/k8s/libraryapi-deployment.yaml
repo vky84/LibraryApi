@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: weatherapi-deployment
+  name: libraryapi-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: weatherapi
+      app: libraryapi
   template:
     metadata:
       labels:
-        app: weatherapi
+        app: libraryapi
     spec:
       containers:
-      - name: weatherapi
-        image: vky84/weatherapi:1.0
+      - name: libraryapi
+        image: vky84/libraryapi:1.0
         ports:
         - containerPort: 8080
         env:
