@@ -10,6 +10,6 @@ namespace LibraryApi.Models
         public DateTime DueDate { get; set; }
         public DateTime? ReturnedDate { get; set; }
         public bool IsReturned => ReturnedDate.HasValue;
-        public bool IsOverdue => !IsReturned && DateTime.Now > DueDate;
+        public bool IsOverdue => !IsReturned && DateTime.UtcNow > DueDate;
     }
 }

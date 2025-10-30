@@ -36,8 +36,8 @@ namespace LibraryApi.Services
                 BookId = request.BookId,
                 UserId = request.UserId,
                 UserName = request.UserName,
-                BorrowedDate = DateTime.Now,
-                DueDate = DateTime.Now.AddDays(14), // 2 weeks borrowing period
+                BorrowedDate = DateTime.UtcNow, // Changed from DateTime.Now to DateTime.UtcNow
+                DueDate = DateTime.UtcNow.AddDays(14), // Changed from DateTime.Now to DateTime.UtcNow
                 ReturnedDate = null
             };
 
@@ -58,7 +58,7 @@ namespace LibraryApi.Services
                 return false;
             }
 
-            borrowingRecord.ReturnedDate = DateTime.Now;
+            borrowingRecord.ReturnedDate = DateTime.UtcNow; // Changed from DateTime.Now to DateTime.UtcNow
             
             // Mark book as available again
             var book = await _booksService.GetBookByIdAsync(borrowingRecord.BookId);
@@ -81,7 +81,7 @@ namespace LibraryApi.Services
         public async Task<IEnumerable<BorrowingRecord>> GetOverdueBooksAsync()
         {
             return await _context.BorrowingRecords
-                .Where(br => !br.IsReturned && DateTime.Now > br.DueDate)
+                .Where(br => !br.IsReturned && DateTime.UtcNow > br.DueDate) // Changed from DateTime.Now to DateTime.UtcNow
                 .ToListAsync();
         }
     }
