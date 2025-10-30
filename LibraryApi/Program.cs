@@ -24,22 +24,9 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Ensure database is created and migrated
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<LibraryDbContext>();
-    try
-    {
-        context.Database.EnsureCreated();
-        // Alternatively, you can use migrations:
-        // context.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while creating the database.");
-    }
-}
+// Initialize database (apply migrations and seed data)
+// Use the DatabaseInitializer to apply migrations and seed dummy data when needed.
+await LibraryApi.Services.DatabaseInitializer.InitializeAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
