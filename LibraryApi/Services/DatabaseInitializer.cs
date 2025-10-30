@@ -23,49 +23,78 @@ namespace LibraryApi.Services
                 {
                     var builder = new NpgsqlConnectionStringBuilder(connectionString);
                     var targetDb = builder.Database;
+                    
+                    logger.LogInformation("Database connection details - Host: {host}, Port: {port}, Database: {database}, Username: {username}",
+                        builder.Host, builder.Port, builder.Database, builder.Username);
 
                     // If database is empty/null we skip
                     if (!string.IsNullOrEmpty(targetDb))
                     {
+                        logger.LogInformation("Checking if database '{db}' exists on host '{host}'...", targetDb, builder.Host);
+                        
                         // Connect to the maintenance 'postgres' database to check/create the target DB
                         var adminBuilder = new NpgsqlConnectionStringBuilder(connectionString)
                         {
                             Database = "postgres"
                         };
 
-                        await using var adminConn = new NpgsqlConnection(adminBuilder.ConnectionString);
-                        await adminConn.OpenAsync();
-
-                        await using var cmd = adminConn.CreateCommand();
-                        cmd.CommandText = "SELECT 1 FROM pg_database WHERE datname = @name";
-                        cmd.Parameters.AddWithValue("name", targetDb);
-                        var exists = await cmd.ExecuteScalarAsync();
-
-                        if (exists == null)
+                        try
                         {
-                            logger.LogInformation("Database '{db}' not found. Creating...", targetDb);
-                            await using var createCmd = adminConn.CreateCommand();
-                            // Use quoted identifier to preserve case if any
-                            createCmd.CommandText = $"CREATE DATABASE \"{targetDb}\"";
-                            await createCmd.ExecuteNonQueryAsync();
-                            logger.LogInformation("Database '{db}' created.", targetDb);
+                            await using var adminConn = new NpgsqlConnection(adminBuilder.ConnectionString);
+                            logger.LogInformation("Attempting to connect to PostgreSQL at {host}:{port}...", builder.Host, builder.Port);
+                            await adminConn.OpenAsync();
+                            logger.LogInformation("Successfully connected to PostgreSQL server at {host}:{port}", builder.Host, builder.Port);
+
+                            await using var cmd = adminConn.CreateCommand();
+                            cmd.CommandText = "SELECT 1 FROM pg_database WHERE datname = @name";
+                            cmd.Parameters.AddWithValue("name", targetDb);
+                            var exists = await cmd.ExecuteScalarAsync();
+
+                            if (exists == null)
+                            {
+                                logger.LogInformation("Database '{db}' not found. Creating...", targetDb);
+                                await using var createCmd = adminConn.CreateCommand();
+                                // Use quoted identifier to preserve case if any
+                                createCmd.CommandText = $"CREATE DATABASE \"{targetDb}\"";
+                                await createCmd.ExecuteNonQueryAsync();
+                                logger.LogInformation("Database '{db}' created successfully.", targetDb);
+                            }
+                            else
+                            {
+                                logger.LogInformation("Database '{db}' already exists.", targetDb);
+                            }
+                        }
+                        catch (NpgsqlException npgEx)
+                        {
+                            logger.LogError(npgEx, "PostgreSQL connection error - Host: {host}, Port: {port}, Error Code: {code}", 
+                                builder.Host, builder.Port, npgEx.SqlState);
+                            logger.LogError("Could not connect to PostgreSQL server. Check:");
+                            logger.LogError("  1. PostgreSQL service is running");
+                            logger.LogError("  2. Host name '{host}' is correct (should be postgres-service in k8s, not localhost)", builder.Host);
+                            logger.LogError("  3. Port {port} is accessible", builder.Port);
+                            logger.LogError("  4. Network connectivity between pods");
+                            logger.LogError("  5. PostgreSQL is configured to accept connections from this IP");
+                            throw;
                         }
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not NpgsqlException)
             {
                 logger.LogWarning(ex, "Could not ensure database exists; continuing and letting Migrate handle it if possible.");
             }
 
             try
             {
+                logger.LogInformation("Applying database migrations...");
                 // Apply migrations (creates schema/tables)
                 await context.Database.MigrateAsync();
+                logger.LogInformation("Database migrations applied successfully.");
 
                 // Seed dummy data if not present
                 if (!await context.Books.AnyAsync())
                 {
+                    logger.LogInformation("Seeding initial book data...");
                     var books = new[]
                     {
                         new Models.Book { Id = 1, Title = "The Great Gatsby", Author = "F. Scott Fitzgerald", ISBN = "978-0-7432-7356-5", PublishedDate = new DateTime(1925, 4, 10), Genre = "Fiction", IsAvailable = true, Description = "A classic American novel" },
@@ -76,10 +105,16 @@ namespace LibraryApi.Services
                     };
                     await context.Books.AddRangeAsync(books);
                     await context.SaveChangesAsync();
+                    logger.LogInformation("Seeded {count} books.", books.Length);
+                }
+                else
+                {
+                    logger.LogInformation("Books already exist in database, skipping seed.");
                 }
 
                 if (!await context.BorrowingRecords.AnyAsync())
                 {
+                    logger.LogInformation("Seeding initial borrowing records...");
                     var records = new[]
                     {
                         new Models.BorrowingRecord
@@ -105,9 +140,19 @@ namespace LibraryApi.Services
                     };
                     await context.BorrowingRecords.AddRangeAsync(records);
                     await context.SaveChangesAsync();
+                    logger.LogInformation("Seeded {count} borrowing records.", records.Length);
+                }
+                else
+                {
+                    logger.LogInformation("Borrowing records already exist in database, skipping seed.");
                 }
 
                 logger.LogInformation("Database initialized successfully with seed data.");
+            }
+            catch (NpgsqlException npgEx)
+            {
+                logger.LogError(npgEx, "PostgreSQL error during migration/seeding. Error Code: {code}", npgEx.SqlState);
+                throw;
             }
             catch (Exception ex)
             {
