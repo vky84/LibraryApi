@@ -21,4 +21,4 @@ spec:
         - name: ASPNETCORE_ENVIRONMENT
           value: "Development"
         - name: ConnectionStrings__Default
-          value: 'Host=postgres;Port=5432;Database=librarydb;Username=postgres;Password=postgres'
+          value: 'Host=postgres-service;Port=5432;Database=LibraryDb;Username=postgres;Password=postgres'
