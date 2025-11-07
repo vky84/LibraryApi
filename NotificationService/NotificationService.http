@@ -1,0 +1,142 @@
+### NotificationService API Testing
+### Local: http://localhost:5089
+### Kubernetes: http://<node-ip>:30082
+
+@NotificationService_HostAddress = http://localhost:5089
+@K8s_HostAddress = http://localhost:30082
+
+### Health Check
+GET {{NotificationService_HostAddress}}/api/notifications/health
+Accept: application/json
+
+###
+
+### Get Notification Statistics
+GET {{NotificationService_HostAddress}}/api/notifications/stats
+Accept: application/json
+
+###
+
+### Send Notification to User (Immediate)
+POST {{NotificationService_HostAddress}}/api/notifications/send
+Content-Type: application/json
+
+{
+  "userId": "user1",
+  "subject": "Test Notification",
+  "message": "This is a test notification sent via API!"
+}
+
+###
+
+### Send Welcome Email to User2
+POST {{NotificationService_HostAddress}}/api/notifications/send
+Content-Type: application/json
+
+{
+  "userId": "user2",
+  "subject": "Welcome to Library Management System",
+  "message": "<h1>Welcome!</h1><p>Thank you for joining our library. Your account is now active.</p>"
+}
+
+###
+
+### Send Book Reminder
+POST {{NotificationService_HostAddress}}/api/notifications/send
+Content-Type: application/json
+
+{
+  "userId": "user3",
+  "subject": "Book Return Reminder",
+  "message": "<p>This is a friendly reminder that your book is due soon. Please return it to avoid late fees.</p>"
+}
+
+###
+
+### Get User Notifications (user1)
+GET {{NotificationService_HostAddress}}/api/notifications/user/user1
+Accept: application/json
+
+###
+
+### Get User Notifications (user2)
+GET {{NotificationService_HostAddress}}/api/notifications/user/user2
+Accept: application/json
+
+###
+
+### Get Pending Notifications
+GET {{NotificationService_HostAddress}}/api/notifications/pending
+Accept: application/json
+
+###
+
+### Schedule Notification for Future Delivery
+POST {{NotificationService_HostAddress}}/api/notifications/schedule
+Content-Type: application/json
+
+{
+  "userId": "user1",
+  "userEmail": "john.doe@example.com",
+  "userName": "John Doe",
+  "type": 3,
+  "subject": "Book Due Soon Reminder",
+  "message": "<p>Your book 'The Great Gatsby' is due in 2 days. Please return it on time.</p>",
+  "bookId": 1,
+  "borrowingRecordId": 1,
+  "scheduledFor": "2025-01-10T09:00:00Z"
+}
+
+###
+
+### KUBERNETES TESTING (when deployed to K8s)
+
+### Health Check (K8s)
+GET {{K8s_HostAddress}}/api/notifications/health
+Accept: application/json
+
+###
+
+### Send Notification (K8s)
+POST {{K8s_HostAddress}}/api/notifications/send
+Content-Type: application/json
+
+{
+  "userId": "user1",
+  "subject": "Test from Kubernetes",
+  "message": "This notification was sent from Kubernetes deployment!"
+}
+
+###
+
+### Get User Notifications (K8s)
+GET {{K8s_HostAddress}}/api/notifications/user/user1
+Accept: application/json
+
+###
+
+### INTEGRATION TESTING
+
+### Test with Non-Existent User (should fail)
+POST {{NotificationService_HostAddress}}/api/notifications/send
+Content-Type: application/json
+
+{
+  "userId": "user999",
+  "subject": "Test",
+  "message": "This should fail"
+}
+
+###
+
+### Test with Invalid Data (should return validation error)
+POST {{NotificationService_HostAddress}}/api/notifications/send
+Content-Type: application/json
+
+{
+  "userId": "",
+  "subject": "",
+  "message": ""
+}
+
+###

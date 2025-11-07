@@ -3,20 +3,17 @@ using System;
 using LibraryApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace LibraryApi.Data.Migrations
+namespace LibraryApi.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    [Migration("20251030161505_InitialCreate")]
-    partial class InitialCreate
+    partial class LibraryDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -170,8 +167,8 @@ namespace LibraryApi.Data.Migrations
                         {
                             Id = 1,
                             BookId = 3,
-                            BorrowedDate = new DateTime(2025, 10, 20, 17, 15, 4, 275, DateTimeKind.Utc).AddTicks(8744),
-                            DueDate = new DateTime(2025, 10, 27, 17, 15, 4, 275, DateTimeKind.Utc).AddTicks(8905),
+                            BorrowedDate = new DateTime(2025, 9, 28, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DueDate = new DateTime(2025, 10, 12, 0, 0, 0, 0, DateTimeKind.Utc),
                             UserId = "user1",
                             UserName = "John Doe"
                         },
@@ -179,11 +176,177 @@ namespace LibraryApi.Data.Migrations
                         {
                             Id = 2,
                             BookId = 1,
-                            BorrowedDate = new DateTime(2025, 10, 25, 17, 15, 4, 275, DateTimeKind.Utc).AddTicks(8916),
-                            DueDate = new DateTime(2025, 11, 8, 17, 15, 4, 275, DateTimeKind.Utc).AddTicks(8920),
-                            ReturnedDate = new DateTime(2025, 10, 29, 17, 15, 4, 275, DateTimeKind.Utc).AddTicks(8924),
+                            BorrowedDate = new DateTime(2025, 10, 3, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DueDate = new DateTime(2025, 10, 17, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ReturnedDate = new DateTime(2025, 10, 7, 0, 0, 0, 0, DateTimeKind.Utc),
                             UserId = "user2",
                             UserName = "Jane Smith"
+                        });
+                });
+
+            modelBuilder.Entity("LibraryApi.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("BookId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BorrowingRecordId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsSent")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ScheduledFor")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsSent", "ScheduledFor");
+
+                    b.HasIndex("UserId", "IsSent");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("LibraryApi.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("JoinedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MembershipType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Email = "waqas.siddiqui@me.com",
+                            FullName = "Waqas Siddiqui",
+                            IsActive = true,
+                            JoinedDate = new DateTime(2024, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MembershipType = "Standard",
+                            UserId = "user1",
+                            UserName = "vky84"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Email = "jane.smith@example.com",
+                            FullName = "Jane Elizabeth Smith",
+                            IsActive = true,
+                            JoinedDate = new DateTime(2023, 12, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MembershipType = "Premium",
+                            UserId = "user2",
+                            UserName = "Jane Smith"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Email = "bob.johnson@example.com",
+                            FullName = "Robert James Johnson",
+                            IsActive = true,
+                            JoinedDate = new DateTime(2024, 9, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MembershipType = "Standard",
+                            UserId = "user3",
+                            UserName = "Bob Johnson"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Email = "john.doe@example.com",
+                            FullName = "John Michael Doe",
+                            IsActive = true,
+                            JoinedDate = new DateTime(2024, 6, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            MembershipType = "Standard",
+                            UserId = "user4",
+                            UserName = "John Doe"
                         });
                 });
 

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notificationservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notificationservice
+  template:
+    metadata:
+      labels:
+        app: notificationservice
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            until nc -z postgres-service 5432; do
+              echo "Waiting for Postgres..."
+              sleep 2
+            done
+      containers:
+      - name: notificationservice
+        image: vky84/notificationservice:1.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Development"
+        - name: ConnectionStrings__DefaultConnection
+          value: 'Host=postgres-service;Port=5432;Database=LibraryDb;Username=postgres;Password=postgres'
+        - name: Smtp__Host
+          value: "smtp.example.com"
+        - name: Smtp__Port
+          value: "587"
+        - name: Smtp__Username
+          value: "notifications@library.com"
+        - name: Smtp__Password
+          value: "your-smtp-password"
+        - name: Smtp__FromEmail
+          value: "noreply@library.com"
