@@ -8,6 +8,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Configure CORS to allow Swagger UI to make requests
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Log the connection string being used (mask password for security)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
@@ -96,6 +107,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// Enable CORS - MUST be before UseAuthorization
+app.UseCors("AllowAll");
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
@@ -103,8 +117,9 @@ app.UseAuthorization();
 app.MapControllers();
 
 Console.WriteLine("=== NOTIFICATION SERVICE STARTED ===");
-Console.WriteLine($"Swagger UI: http://localhost:{{port}}/swagger");
-Console.WriteLine($"Health Check: http://localhost:{{port}}/api/notifications/health");
+Console.WriteLine($"Swagger UI: http://localhost:5089/swagger");
+Console.WriteLine($"Swagger UI (HTTPS): https://localhost:7230/swagger");
+Console.WriteLine($"Health Check: http://localhost:5089/api/notifications/health");
 Console.WriteLine("=====================================");
 
 app.Run();
