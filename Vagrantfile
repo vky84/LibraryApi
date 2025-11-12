@@ -1,6 +1,6 @@
 Vagrant.configure("2") do |config|
-  # Base Ubuntu 22.04
-  config.vm.box = "ubuntu/jammy64"
+  # Lightweight Ubuntu 22.04 (bento is smaller and optimized for Vagrant)
+  config.vm.box = "bento/ubuntu-22.04"
   config.vm.hostname = "bigdata-assignment"
 
   # Network setup
