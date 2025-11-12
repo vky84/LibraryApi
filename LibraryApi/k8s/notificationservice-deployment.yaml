@@ -34,12 +34,12 @@ spec:
         - name: ConnectionStrings__DefaultConnection
           value: 'Host=postgres-service;Port=5432;Database=LibraryDb;Username=postgres;Password=postgres'
         - name: Smtp__Host
-          value: "smtp.example.com"
+          value: "smtp.gmail.com"
         - name: Smtp__Port
           value: "587"
         - name: Smtp__Username
-          value: "notifications@library.com"
+          value: "vky84.com@gmail.com"
         - name: Smtp__Password
-          value: "your-smtp-password"
+          value: "wqxxqfpwxervqxux"
         - name: Smtp__FromEmail
-          value: "noreply@library.com"
+          value: "vky84.com@gmail.com"
