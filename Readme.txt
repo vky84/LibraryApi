@@ -1,3 +1,8 @@
+cleanup vagrant
+vagrant destroy -f
+Remove-Item -Recurse -Force .vagrant
+
+
 docker build -t vky84/libraryapi:1.0 .
 # from the repo root (c:\BigDataAssignment)
 docker build --target libraryapi -t libraryapi:latest .
@@ -18,19 +23,23 @@ ls /vagrant
 minikube status
 minikube start --driver=docker
 
+# Apply Kubernetes manifests (services before deployments)
 cd /vagrant/LibraryApi/k8s
 
+# Apply services BEFORE deployments (best practice)
+kubectl apply -f libraryapi-service.yaml
+kubectl apply -f notificationservice-service.yaml
+
+# Then apply deployments
 kubectl apply -f postgres-deployment.yaml
 kubectl apply -f libraryapi-deployment.yaml
-kubectl apply -f libraryapi-service.yaml
+kubectl apply -f notificationservice-deployment.yaml
 
 kubectl port-forward --address 0.0.0.0 service/library  api-service 5081:8080
 
 kubectl port-forward --address 0.0.0.0 service/library  api-service 5062:8080
 
 kubectl port-forward --address 0.0.0.0 service/libraryapi-service 30081:8080 &
-
-5262
 
 kubectl get pods
 kubectl get services
@@ -57,4 +66,3 @@ Presentation Flow:
 -> Open powershell 
 -> Vagrant Up
 -> Vagrnt ssh
--> 

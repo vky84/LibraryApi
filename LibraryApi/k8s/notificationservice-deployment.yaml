@@ -19,7 +19,7 @@ spec:
           - sh
           - -c
           - |
-            until nc -z postgres-service 5432; do
+            until nc -z postgres 5432; do
               echo "Waiting for Postgres..."
               sleep 2
             done
@@ -32,7 +32,7 @@ spec:
         - name: ASPNETCORE_ENVIRONMENT
           value: "Development"
         - name: ConnectionStrings__DefaultConnection
-          value: 'Host=postgres-service;Port=5432;Database=LibraryDb;Username=postgres;Password=postgres'
+          value: 'Host=postgres;Port=5432;Database=LibraryDb;Username=postgres;Password=postgres'
         - name: Smtp__Host
           value: "smtp.gmail.com"
         - name: Smtp__Port

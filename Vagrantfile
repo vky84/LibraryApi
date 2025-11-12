@@ -10,20 +10,19 @@ Vagrant.configure("2") do |config|
   # Resource allocation
   config.vm.provider "virtualbox" do |vb|
     vb.name = "BigDataAssignment"
-    vb.memory = "4096"
+    vb.memory = "3072"
     vb.cpus = 2
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+    vb.customize ["modifyvm", :id, "--paravirtprovider", "kvm"]
   end
 
   # Provisioning script
   config.vm.provision "shell", inline: <<-SHELL
-    echo "Updating system..."
+    echo "=== Step 1: Update system ==="
     sudo apt-get update -y
-    sudo apt-get upgrade -y
 
-    echo "Installing dependencies..."
-    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg lsb-release conntrack
-
-    echo "Installing Docker..."
+    echo "=== Step 2: Install Docker (needed for Minikube driver) ==="
+    sudo apt-get install -y apt-transport-https ca-certificates curl conntrack
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt-get update -y
@@ -32,30 +31,50 @@ Vagrant.configure("2") do |config|
     sudo systemctl enable docker
     sudo systemctl start docker
 
-    echo "Installing Docker Compose..."
-    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
-
-    echo "Installing kubectl..."
+    echo "=== Step 3: Install kubectl ==="
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
     rm kubectl
 
-    echo "Installing Minikube..."
+    echo "=== Step 4: Install Minikube ==="
     curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
     sudo install minikube-linux-amd64 /usr/local/bin/minikube
     rm minikube-linux-amd64
 
-    echo "Starting Minikube..."
-    minikube start --driver=docker --memory=2048 --cpus=2
+    echo "=== Step 5: Start Minikube cluster ==="
+    sudo -u vagrant minikube start --driver=docker --memory=2048 --cpus=2
 
-    echo "Set kubectl context to minikube"
-    sudo chown -R vagrant:vagrant $HOME/.kube
-    sudo chown -R vagrant:vagrant $HOME/.minikube
+    echo "=== Step 6: Pull microservice Docker images ==="
+    sudo -u vagrant docker pull vky84/libraryapi:1.0
+    sudo -u vagrant docker pull vky84/notificationservice:1.0
+    sudo -u vagrant docker pull postgres:latest
 
-    echo "Installation and Minikube start completed!"
+    echo "=== Step 7: Load images into Minikube ==="
+    sudo -u vagrant minikube image load vky84/libraryapi:1.0
+    sudo -u vagrant minikube image load vky84/notificationservice:1.0
+    sudo -u vagrant minikube image load postgres:latest
 
-    # echo "Starting Minikube on boot..."
-    # sudo bash -c 'echo "@reboot root minikube start --driver=docker" >> /etc/crontab'
+    echo "=== Step 8: Deploy to Kubernetes (Services first, then Deployments) ==="
+    cd /vagrant/LibraryApi/k8s
+    
+    # Apply services first (best practice)
+    sudo -u vagrant kubectl apply -f libraryapi-service.yaml
+    sudo -u vagrant kubectl apply -f notificationservice-service.yaml
+    
+    # Then apply deployments
+    sudo -u vagrant kubectl apply -f postgres-deployment.yaml
+    sudo -u vagrant kubectl apply -f libraryapi-deployment.yaml
+    sudo -u vagrant kubectl apply -f notificationservice-deployment.yaml
+
+    echo "=== Step 9: Wait for pods to be ready ==="
+    sudo -u vagrant kubectl wait --for=condition=ready pod --all --timeout=300s
+
+    echo "=== Step 10: Show deployment status ==="
+    sudo -u vagrant kubectl get pods
+    sudo -u vagrant kubectl get services
+
+    echo ""
+    echo "✅ Setup complete! Your microservices are deployed."
+    echo "Access Swagger at: http://192.168.56.10:30081/swagger"
   SHELL
 end
