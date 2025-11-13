@@ -65,34 +65,66 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Initialize database (apply migrations and seed data)
+// Verify database connectivity (NO MIGRATIONS!)
+// LibraryApi is responsible for creating all tables and running migrations
 try
 {
-    Console.WriteLine("=== INITIALIZING DATABASE (NOTIFICATION SERVICE) ===");
+    Console.WriteLine("=== VERIFYING DATABASE CONNECTIVITY (NOTIFICATION SERVICE) ===");
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<LibraryDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     
-    logger.LogInformation("Applying database migrations...");
-    await context.Database.MigrateAsync();
-    logger.LogInformation("Database migrations applied successfully");
+    // Just check if we can connect - DO NOT apply migrations
+    logger.LogInformation("Checking database connection...");
+    var canConnect = await context.Database.CanConnectAsync();
     
-    // Check if Users table has data
-    var userCount = await context.Users.CountAsync();
-    logger.LogInformation("Users in database: {count}", userCount);
+    if (!canConnect)
+    {
+        logger.LogError("Cannot connect to database!");
+        throw new InvalidOperationException("Database connection failed. Make sure LibraryApi has created the database first.");
+    }
     
-    Console.WriteLine("=== DATABASE INITIALIZED SUCCESSFULLY ===");
+    logger.LogInformation("Database connection successful");
+    
+    // Verify Users table exists and has data
+    try
+    {
+        var userCount = await context.Users.CountAsync();
+        logger.LogInformation("Users in database: {count}", userCount);
+        
+        if (userCount == 0)
+        {
+            logger.LogWarning("WARNING: Users table is empty. Make sure LibraryApi has run migrations and seeded data.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "ERROR: Could not read Users table. Make sure LibraryApi has created the schema.");
+        logger.LogError("Did you run LibraryApi first? LibraryApi must create all tables before NotificationService can use them.");
+        throw;
+    }
+    
+    Console.WriteLine("=== DATABASE VERIFICATION SUCCESSFUL ===");
+    Console.WriteLine("NOTE: All database tables are managed by LibraryApi");
+    Console.WriteLine("Make sure LibraryApi has run at least once to create the schema.");
+    Console.WriteLine("========================================");
 }
 catch (Exception ex)
 {
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "FATAL: Failed to initialize database.");
+    logger.LogError(ex, "FATAL: Database verification failed.");
     logger.LogError("Exception Type: {type}", ex.GetType().Name);
     logger.LogError("Exception Message: {message}", ex.Message);
     if (ex.InnerException != null)
     {
         logger.LogError("Inner Exception: {innerMessage}", ex.InnerException.Message);
     }
+    logger.LogError("");
+    logger.LogError("=== IMPORTANT ===");
+    logger.LogError("NotificationService does NOT create database tables.");
+    logger.LogError("You must run LibraryApi first to create the database schema.");
+    logger.LogError("LibraryApi handles all migrations and data seeding.");
+    logger.LogError("=================");
     throw;
 }
 

@@ -25,7 +25,7 @@ spec:
             done
       containers:
       - name: notificationservice
-        image: vky84/notificationservice:1.0
+        image: vky84/notificationservice:latest
         ports:
         - containerPort: 8080
         env:
