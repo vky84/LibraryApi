@@ -46,12 +46,12 @@ Vagrant.configure("2") do |config|
 
     echo "=== Step 6: Pull microservice Docker images ==="
     sudo -u vagrant docker pull vky84/libraryapi:1.0
-    sudo -u vagrant docker pull vky84/notificationservice:1.0
+    sudo -u vagrant docker pull vky84/notificationservice:latest
     sudo -u vagrant docker pull postgres:latest
 
     echo "=== Step 7: Load images into Minikube ==="
     sudo -u vagrant minikube image load vky84/libraryapi:1.0
-    sudo -u vagrant minikube image load vky84/notificationservice:1.0
+    sudo -u vagrant minikube image load vky84/notificationservice:latest
     sudo -u vagrant minikube image load postgres:latest
 
     echo "=== Step 8: Deploy to Kubernetes (Services first, then Deployments) ==="
